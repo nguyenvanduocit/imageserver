@@ -2,6 +2,7 @@
 package groupcache
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/golang/groupcache"
@@ -26,14 +27,14 @@ type Server struct {
 }
 
 // Get implements imageserver.Server.
-func (srv *Server) Get(params imageserver.Params) (*imageserver.Image, error) {
-	ctx := &Context{
+func (srv *Server) Get(ctx context.Context, params imageserver.Params) (*imageserver.Image, error) {
+	gctx := &Context{
 		Params: params,
 	}
 	key := srv.KeyGenerator.GetKey(params)
 	var data []byte
 	dest := groupcache.AllocatingByteSliceSink(&data)
-	err := srv.Group.Get(ctx, key, dest)
+	err := srv.Group.Get(gctx, key, dest)
 	if err != nil {
 		return nil, err
 	}
@@ -62,7 +63,7 @@ func (gt *Getter) Get(ctx groupcache.Context, key string, dest groupcache.Sink) 
 	if myctx.Params == nil {
 		return fmt.Errorf("context has nil Params")
 	}
-	im, err := gt.Server.Get(myctx.Params)
+	im, err := gt.Server.Get(context.TODO(), myctx.Params)
 	if err != nil {
 		return err
 	}
